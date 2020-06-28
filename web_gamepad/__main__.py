@@ -1,6 +1,6 @@
 from . import app
-from . import ws_routes  # noqa: F401
 from . import http_routes  # noqa: F401
+from . import ws_routes  # noqa: F401
 
 if __name__ == "__main__":
     import gevent
