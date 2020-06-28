@@ -1,0 +1,13 @@
+/* Connection status indicators */
+.connection_status.connected::after {
+    color: green;
+    content: "✓✓✓";
+}
+.connection_status.disconnected::after {
+    color: red;
+    content: "✘✘✘";
+}
+.connection_status.uninitialised::after {
+    color: blue;
+    content: "???";
+}
