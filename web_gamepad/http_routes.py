@@ -9,14 +9,15 @@ def hello():
 
 @app.route('/echo_test.html')
 def echo_test():
-    # This HTML is yoinked from the "create your own test" at: https://www.websocket.org/echo.html
+    # This HTML is *mostly* yoinked from the "create your own test" at: https://www.websocket.org/echo.html
     return """
   <!DOCTYPE html>
   <meta charset="utf-8" />
   <title>WebSocket Test</title>
   <script language="javascript" type="text/javascript">
 
-  var wsUri = "ws://localhost:5000/echo_listener";
+  var wsUri = new URL("echo_listener", window.location.href);
+  wsUri.protocol = wsUri.protocol.replace('https', 'wss').replace('http', 'ws')
   var output;
 
   function init()
