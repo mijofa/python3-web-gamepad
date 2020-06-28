@@ -1,11 +1,10 @@
-import flask
-
-app = flask.Flask(__name__)
+from . import app
 
 
 @app.route('/')
 def hello():
     return 'Hello World!'
+
 
 @app.route('/echo_test.html')
 def echo_test():
