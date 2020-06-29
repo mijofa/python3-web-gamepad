@@ -17,7 +17,7 @@ app.secret_key = os.urandom(64)
 
 
 # Since I don't care about user logins/etc,
-# just dump a random uuid in for a differentiating them
+# just dump a random uuid in for differentiating them
 @app.before_request
 def make_session_identifiable():
     if 'uuid' not in flask.session:

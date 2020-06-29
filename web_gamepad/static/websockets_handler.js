@@ -1,9 +1,13 @@
+// FIXME: This whole thing only handles a single websocket per page
+//        Perhaps if more is required we should be using socket.io instead though
+
 function websocket_init(wsUri) {
     // WebSocket() doesn't accept relative URLs directly
     wsUri = new URL(wsUri, window.location.href);
     wsUri.protocol = wsUri.protocol.replace('https', 'wss').replace('http', 'ws')
   
     websocket = new WebSocket(wsUri);
+    // FIXME: Use event listeners properly?
     websocket.onopen    = function(evt) { websocket_onOpen(evt) };
     websocket.onclose   = function(evt) { websocket_onClose(evt) };
     websocket.onmessage = function(evt) { websocket_onMessage(evt) };
