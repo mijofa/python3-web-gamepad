@@ -1,3 +1,5 @@
+// TODO: Handle FF/rumble events coming from the game/server
+
 var gamepad_changedEvent = new Event('gamepadchanged')
 
 function gamepad_init() {
@@ -9,6 +11,17 @@ function gamepad_init() {
     }
 }
 
+function gamepad_anyConnected() {
+    // FIXME: Fucking Javascript
+    // getGamepads() returns a list of length:4 regardless of how many gamepads are actually connected.
+    // This means we can't just check the length and instead have to iterate through the list checking each individual item.
+    for (g of navigator.getGamepads()) {
+        if (g && g.connected) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // To reduce network trafic, I only want to upload the new state when something actually changes.
 // I need this outside of the scope of the LoopOnce function so that it remains persistent for every loop.
@@ -60,8 +73,6 @@ function gamepad_inputLoopOnce() {
 
 // Javascript's JSON parser can't understand Javascript's Gamepad objects
 function gamepad_jsonReplacer(key, value) {
-    console.log('key '+key);
-    console.log('value '+value);
     // Key is the object to be stringified
     // Value is the string JSON has already tried to do
     if (Gamepad.prototype.isPrototypeOf(value)) {
