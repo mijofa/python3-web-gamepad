@@ -14,11 +14,14 @@ function init() {
     // Initialise gamepad_handler.js
     gamepad_init();
 
+    // FIXME: Don't connect them to the server until it's selected in the dropdown list
     window.addEventListener("gamepadconnected", function(evt) {
         write_debug("Gamepad added: "+evt.gamepad.id);
 
         // Send device addition info via POST request with JSON
         post_gamepad_data(gamepad_open_uri, evt.gamepad);
+
+        gamepad_updateSelector();
 
         // Run the gamepad input loop 50 times per second
         if (!gamepad_inputLoopIntervalID) {
@@ -28,6 +31,8 @@ function init() {
     });
     window.addEventListener("gamepaddisconnected", function(evt) {
         write_debug("Gamepad lost: "+evt.gamepad.id);
+
+        gamepad_updateSelector();
 
         // End the input event loop if that was the last gamepad
         if (!gamepad_anyConnected()) {
