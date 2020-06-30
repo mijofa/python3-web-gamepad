@@ -1,3 +1,8 @@
+A lightweight webserver that will allow anyone to open the webpage and use it as a game controller proxy kind of thing.
+
+This should make local multiplayer games work online when used in conjunction with something like Jitsi for screensharing,
+without the non-local players needing to install (or buy) any client apps on their own devices.
+
 Notes
 =====
 I'm using flask_sockets instead of flask-socketio because in my (very short) experience with the default socket.io javascript,
@@ -6,7 +11,7 @@ And I don't want any extra complexities like that possibly slowing things down a
 
 
 Bug with Steam controller
-=========================
+-------------------------
 UPDATE: Confirmed to only be an issue with Steam simulating X-360 input
         Steam uses UInput, perhaps UInput is reconnecting all simulated devices when a new one is added?
 
