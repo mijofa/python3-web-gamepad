@@ -10,6 +10,11 @@ active_devices = {}
 
 # Javascript adds a mapping field to the gamepads for what the browser guesses the mapping is
 # This maps that to UInput capabilities
+# FIXME: Might need to rework this to take some wild guesses at the controller layout
+#        because the spec doesn't seem to get followed
+#        Suggestions: 8 axes = 2 sticks, 2 triggers, and a D-pad
+#                     6 axes = 2 sticks, and a D-pad, with triggers as buttons
+#                     4 axes = 2 sticks, with triggers & D-pad as buttons
 mapping_capabilities = {
     'xbox': {
         ## As copied from the capabilities of Steam's X-box controller
@@ -102,7 +107,7 @@ mapping_capabilities = {
         ],
         # FIXME: Add support for EV_FF
         # evdev.ecodes.EV_FF: [
-        #     evdev.ecodes.RUMBLE,
+        #     evdev.ecodes.FF_RUMBLE,
         #     evdev.ecodes.FF_PERIODIC,
         #     evdev.ecodes.FF_WAVEFORM_MIN,
         #     evdev.ecodes.FF_TRIANGLE,
