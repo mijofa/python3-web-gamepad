@@ -79,7 +79,7 @@ def add_device(user_identifier, gamepad_info):
 
     active_devices[user_identifier] = evdev.UInput(
         events=mapping_capabilities[gamepad_info['mapping']],
-        name=gamepad_info['id'],
+        name=gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
         vendor=gamepad_info.get('usb_vendor', 1),
         product=gamepad_info.get('usb_product', 1),
     )
