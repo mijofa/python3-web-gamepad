@@ -3,6 +3,9 @@ A lightweight webserver that will allow anyone to open the webpage and use it as
 This should make local multiplayer games work online when used in conjunction with something like Jitsi for screensharing,
 without the non-local players needing to install (or buy) any client apps on their own devices.
 
+A feature to be added in future is an onscreen virtual gamepad,
+which should allow people to use their phones as the gamepad rather than needing one connected to the computer via USB.
+
 Notes
 =====
 I'm using flask_sockets instead of flask-socketio because in my (very short) experience with the default socket.io javascript,
