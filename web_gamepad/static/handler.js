@@ -14,14 +14,12 @@ function init() {
     // Initialise gamepad_handler.js
     gamepad_init();
 
-    // FIXME: Don't connect them to the server until it's selected in the dropdown list
-    window.addEventListener("gamepadconnected", function(evt) {
-        write_debug("Gamepad added: "+evt.gamepad.id);
+    // FIXME: I'm no longer using *any* of the offical GamepadEvents and am instead simply using it to create my own
+    window.addEventListener("gamepadSelected", function(evt) {
+        write_debug("Gamepad selected: "+evt.gamepad.id);
 
         // Send device addition info via POST request with JSON
         post_gamepad_data(gamepad_open_uri, evt.gamepad);
-
-        gamepad_updateSelector();
 
         // Run the gamepad input loop 50 times per second
         if (!gamepad_inputLoopIntervalID) {
@@ -29,22 +27,20 @@ function init() {
             gamepad_inputLoopIntervalID = window.setInterval(gamepad_inputLoopOnce, 20);
         }
     });
-    window.addEventListener("gamepaddisconnected", function(evt) {
-        write_debug("Gamepad lost: "+evt.gamepad.id);
+    window.addEventListener("gamepadDisabled", function() {
+        write_debug("Gamepad disabled");
 
         gamepad_updateSelector();
 
         // End the input event loop if that was the last gamepad
-        if (!gamepad_anyConnected()) {
-            write_debug("Ending input loop")
-            clearInterval(gamepad_inputLoopIntervalID);
-            gamepad_inputLoopIntervalID = null
-        }
+        write_debug("Ending input loop")
+        clearInterval(gamepad_inputLoopIntervalID);
+        gamepad_inputLoopIntervalID = null
 
         // Send device removal info via POST request with JSON
-        post_gamepad_data(gamepad_close_uri, evt.gamepad);
+        post_gamepad_data(gamepad_close_uri);
     });
-    window.addEventListener("gamepadchanged", function(evt) {
+    window.addEventListener("gamepadInputUpdate", function(evt) {
         write_debug("Gamepad changed: "+evt.gamepad.id)
 
         // TODO: Send input changes via websocket with JSON

@@ -7,27 +7,25 @@ var gamepad_selectorElement;
 function gamepad_init() {
     if (navigator.getGamepads) {
         gamepad_selectorElement = document.getElementById("gamepad_selector");
+        gamepad_selectorElement.addEventListener('change', gamepad_select);
         gamepad_updateSelector();
         document.getElementById("gamepad_identify_button").onclick = gamepad_identifySelectedGamepad;
 
+        window.addEventListener("gamepadconnected", evt => gamepad_updateSelector());
+        window.addEventListener("gamepaddisconnected", evt => gamepad_updateSelector());
+        window.addEventListener("gamepaddisconnected", function (evt) {
+            if (gamepad_isSelectedGamepad(evt.gamepad)) {
+                gamepad_selectorElement.selectedIndex = 0
+                window.dispatchEvent(new GamepadEvent('gamepadDisabled'));
+            }
+        });
+
         return true
     } else {
-        // FIXME: How do we handle this?
+        // FIXME: What do we do here?
 
         return false
     }
-}
-
-function gamepad_anyConnected() {
-    // FIXME: Fucking Javascript
-    // getGamepads() returns a list of length:4 regardless of how many gamepads are actually connected.
-    // This means we can't just check the length and instead have to iterate through the list checking each individual item.
-    for (g of navigator.getGamepads()) {
-        if (g && g.connected) {
-            return true;
-        }
-    }
-    return false;
 }
 
 function gamepad_updateSelector() {
@@ -37,15 +35,24 @@ function gamepad_updateSelector() {
     // So instead I have to create the new list of options up front,
     // and swap out the old list while trying to preserve the selected on.
     var new_options = [];
+
+    null_option = document.createElement('option');
+    null_option.innerText = "Disabled";
+    null_option.value = 'null';  // Comes out as a string, but that's good enough
+    if (! gamepad_selectorElement.selectedOptions[0] || gamepad_selectorElement.selectedOptions[0].value == 'null') {
+        null_option.selected = true;
+    }
+    new_options.push(null_option);
+
     var connected_count = 0
     for (g of navigator.getGamepads()) {
         if (g && g.connected) {
             connected_count += 1;
 
-            option = document.createElement('option');
+            var option = document.createElement('option');
             option.value = g.index;
             option.innerText = g.id;
-            if (gamepad_selectorElement.selectedOptions.length && g.index == gamepad_selectorElement.selectedOptions[0].value) {
+            if (gamepad_isSelectedGamepad(g)) {
                 option.selected = true;
             }
             new_options.push(option);
@@ -57,14 +64,16 @@ function gamepad_updateSelector() {
 
     // Add the new children back in
     // FIXME: Test with more than a single controller connected
-    if (new_options.length != 1) {
-        option = document.createElement('option');
-        option.innerText = "None connected, push a button";
-        option.disabled = true;
-        gamepad_selectorElement.appendChild(option);
+    if (! connected_count) {
+        gamepad_selectorElement.appendChild(null_option);
+
+        var desc_option = document.createElement('option');
+        desc_option.innerText = "None connected, push a button";
+        desc_option.disabled = true;
+        gamepad_selectorElement.appendChild(desc_option);
     } else {
         for (o of new_options) {
-            gamepad_selectorElement.appendChild(option)
+            gamepad_selectorElement.appendChild(o)
         }
     }
 
@@ -91,6 +100,44 @@ function gamepad_updateSelector() {
     }
 }
 
+function gamepad_isSelectedGamepad(gamepad) {
+    // Feels dumb to make this it's own function, but it'll get reused a lot
+    if (! gamepad || gamepad_selectorElement.selectedOptions.length != 1) {
+        return false
+    } else {
+        return gamepad_selectorElement.selectedOptions[0].value == gamepad.index
+    }
+    return false
+}
+
+var gamepad_prevSelected = 'null';
+function gamepad_select() {
+    console.log(gamepad_prevSelected);
+    console.log(gamepad_selectorElement.selectedOptions[0].value);
+    if (gamepad_prevSelected == gamepad_selectorElement.selectedOptions[0].value) {
+        // No change, do nothing
+        return true;
+    } else if (gamepad_selectorElement.selectedOptions[0].value == 'null') {
+        window.dispatchEvent(new GamepadEvent('gamepadDisabled'));
+    } else {
+        for (g of navigator.getGamepads()) {
+            if (g && gamepad_isSelectedGamepad(g)) {
+                // FIXME: Should I really be using GamepadEvent here?
+                if (gamepad_prevSelected != 'null') {
+                    // Previously had a different gamepad selected, so disable first
+                    window.dispatchEvent(new GamepadEvent('gamepadDisabled'));
+                } else if (gamepad_prevSelected == gamepad_selectorElement.selectedOptions[0].value) {
+                    // Already connected to the same gamepad, do nothing
+                } else {
+                    window.dispatchEvent(new GamepadEvent('gamepadSelected', {'gamepad': g}));
+                }
+            }
+        }
+    }
+    gamepad_prevSelected = gamepad_selectorElement.selectedOptions[0].value
+    return true;
+}
+
 function gamepad_identifySelectedGamepad() {
     // Simply vibrates the selected gamepad for half a second
     for (g of navigator.getGamepads()) {
@@ -105,41 +152,27 @@ function gamepad_identifySelectedGamepad() {
     }
 }
 
-function gamepad_isSelectedGamepad(gamepad) {
-    // Feels dumb to make this it's own function, but it's a large snippet of code to copy around
-    if (gamepad_selectorElement.selectedOptions.length != 1) {
-        return false
-    } else {
-        return gamepad_selectorElement.selectedOptions[0].value == gamepad.index
-    }
-}
-
 // To reduce network trafic, I only want to upload the new state when something actually changes.
 // I need this outside of the scope of the LoopOnce function so that it remains persistent for every loop.
-//
-// Using a dict instead of a list because I want it based on the .index rather than just the location in a list.
-// The list location might change when certain devices come/go, but the .index will stay.
-var gamepads_oldState = {}
-// FIXME: Make this only monitor the one selected gamepad
+var gamepad_oldState;
 function gamepad_inputLoopOnce() {
     // Javascripts gamepad stuff doesn't use events and requires polling
-    // I'm leaving LoopForever() as a thing to be done elsewhere
+    // LoopForever() is a thing to be done elsewhere
 
     // "for (i of ..." is equivalent to Python's "for i in ..."
     for (g of navigator.getGamepads()) {
-        if (g && g.connected) {
-            if (gamepads_oldState[g.index] != g) {
+        if (g && g.connected && gamepad_isSelectedGamepad(g)) {
+            if (gamepad_oldState != g) {
+                // Update the oldState variable for the next loop
+                gamepad_oldState = g;
                 // FIXME: Should I really be using GamepadEvent here?
-                gamepads_oldState[g.index] = g;
-                if (gamepad_isSelectedGamepad(g)) {
-                    window.dispatchEvent(new GamepadEvent('gamepadchanged', {'gamepad': g}));
-                }
+                window.dispatchEvent(new GamepadEvent('gamepadInputUpdate', {'gamepad': g}));
             }
         }
     }
 }
 
-// Javascript's JSON parser can't understand Javascript's Gamepad objects
+// Help Javascript's JSON parser understand Javascript's Gamepad objects
 function gamepad_jsonReplacer(key, value) {
     // Key is the object to be stringified
     // Value is the string JSON has already tried to do

@@ -72,32 +72,26 @@ mapping_capabilities = {
 
 
 def add_device(user_identifier, gamepad_info):
-    print("DEBUG: Adding device", gamepad_info)
+    print(user_identifier, "DEBUG: Adding device", gamepad_info)
 
-    assert gamepad_info['index'] not in active_devices.get(user_identifier, {}).keys(), "Controller already connected"
+    assert user_identifier not in active_devices, "Controller already connected"
     assert gamepad_info['mapping'] in mapping_capabilities, "Sorry, controller not supported"
 
-    if user_identifier not in active_devices:
-        active_devices.update({user_identifier: {}})
-
-    # FIXME: Uhhh, Chrome sees this device and adds it, then sees that device and adds it, etc.
-    #        Resolve that in the JS and come back
-    # active_devices[user_identifier].update({gamepad_info['index']: evdev.UInput(
-    #     events=mapping_capabilities[gamepad_info['mapping']],
-    #     name=gamepad_info['id'],
-    #     vendor=gamepad_info.get('usb_vendor', 1),
-    #     product=gamepad_info.get('usb_product', 1),
-    # )})
-    # print(active_devices)
-    # dev = active_devices[user_identifier][gamepad_info['index']]  # noqa: F841
-    # breakpoint()
+    active_devices[user_identifier] = evdev.UInput(
+        events=mapping_capabilities[gamepad_info['mapping']],
+        name=gamepad_info['id'],
+        vendor=gamepad_info.get('usb_vendor', 1),
+        product=gamepad_info.get('usb_product', 1),
+    )
+    print(active_devices)
+    dev = active_devices[user_identifier]  # noqa: F841
 
 
-def remove_device(user_identifier, gamepad_info):
-    print("DEBUG: Removing device", gamepad_info)
+def remove_device(user_identifier):
+    print(user_identifier, "DEBUG: Removing device")
 
-    assert gamepad_info['index'] in active_devices.get(user_identifier, {}).keys(), "Controller not connected"
+    assert user_identifier in active_devices, "Controller not connected"
 
-    # # Close the UInput device and remove it from the stack
-    # active_devices[user_identifier][gamepad_info['index']].close()
-    # active_devices[user_identifier].pop(gamepad_info['index'])
+    # Close the UInput device and remove it from the stack
+    active_devices[user_identifier].close()
+    active_devices.pop(user_identifier)
