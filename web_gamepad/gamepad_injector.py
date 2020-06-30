@@ -66,8 +66,50 @@ mapping_capabilities = {
             (evdev.ecodes.ABS_HAT0Y, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
         ]
         # FIXME: Add support for EV_FF
-        # ecodes.EV_FF: [evdev.ecodes.FF_EFFECT_MIN],
+        # ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
     },
+    'standard': {
+        # FIXME: WTF is EV_SYN and how do I do it?
+        #        I think it's effectively a regular 'ping' from the controller
+        # evdev.ecodes.EV_SYN: [
+        #     evdev.ecodes.SYN_REPORT,
+        #     evdev.ecodes.SYN_CONFIG,
+        #     evdev.ecodes.SYN_DROPPED,
+        #     evdev.ecodes.EV_FF,  # FIXME: Is that right?
+        # ],
+        evdev.ecodes.EV_KEY: [
+            evdev.ecodes.BTN_A,
+            evdev.ecodes.BTN_B,
+            evdev.ecodes.BTN_X,
+            evdev.ecodes.BTN_Y,
+            evdev.ecodes.BTN_TL,
+            evdev.ecodes.BTN_TR,
+            evdev.ecodes.BTN_SELECT,
+            evdev.ecodes.BTN_START,
+            evdev.ecodes.BTN_MODE,
+            evdev.ecodes.BTN_THUMBL,
+            evdev.ecodes.BTN_THUMBR,
+        ],
+        evdev.ecodes.EV_ABS: [
+            (evdev.ecodes.ABS_X, evdev.AbsInfo(value=2672, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=1869, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_Z, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_RX, evdev.AbsInfo(value=613, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_RY, evdev.AbsInfo(value=280, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_RZ, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_HAT0X, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_HAT0Y, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+        ],
+        # FIXME: Add support for EV_FF
+        # evdev.ecodes.EV_FF: [
+        #     evdev.ecodes.RUMBLE,
+        #     evdev.ecodes.FF_PERIODIC,
+        #     evdev.ecodes.FF_WAVEFORM_MIN,
+        #     evdev.ecodes.FF_TRIANGLE,
+        #     evdev.ecodes.FF_SINE,
+        #     evdev.ecodes.FF_MAX_EFFECTS,
+        # ],
+    }
 }
 
 
@@ -76,6 +118,9 @@ def add_device(user_identifier, gamepad_info):
 
     assert user_identifier not in active_devices, "Controller already connected"
     assert gamepad_info['mapping'] in mapping_capabilities, "Sorry, controller not supported"
+    gamepad_caps = mapping_capabilities[gamepad_info['mapping']]
+    assert len(gamepad_info['buttons']) == len(gamepad_caps[evdev.ecodes.EV_KEY]), "Does not match expected button count"
+    assert len(gamepad_info['axes']) == len(gamepad_caps[evdev.ecodes.EV_ABS]), "Does not match expected axes count"
 
     active_devices[user_identifier] = evdev.UInput(
         events=mapping_capabilities[gamepad_info['mapping']],

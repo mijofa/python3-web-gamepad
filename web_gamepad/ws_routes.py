@@ -1,3 +1,6 @@
+import pprint
+import json
+
 import flask
 
 from . import sockets
@@ -21,9 +24,10 @@ def change_gamepad(ws):
     print(flask.session['uuid'], "connected to websocket")
     ws.send("Greetings " + str(flask.session['uuid']))
     while not ws.closed:
-        message = ws.receive()
+        message = json.loads(ws.receive())
         if message:  # We get an empty message as it closes
-            print(flask.session['uuid'], "had input:", message)
+            print(flask.session['uuid'], "had input:", )
+            pprint.pprint(message)
             ws.send("Thanks")
 
     print(flask.session['uuid'], "disconnected from websocket")
