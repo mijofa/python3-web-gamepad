@@ -16,7 +16,7 @@ active_devices = {}
 #                     6 axes = 2 sticks, and a D-pad, with triggers as buttons
 #                     4 axes = 2 sticks, with triggers & D-pad as buttons
 mapping_capabilities = {
-    'xbox': {
+    'xb360': {
         ## As copied from the capabilities of Steam's X-box controller
         # {
         #  # ecodes.EV_SYN, I don't really know what it is or how to emulate it, so I'm leaving it out
@@ -73,6 +73,54 @@ mapping_capabilities = {
         # FIXME: Add support for EV_FF
         # ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
     },
+    'xbone': {
+        # FIXME: WTF is EV_SYN and how do I do it?
+        #        I think it's effectively a regular 'ping' from the controller
+        # evdev.ecodes.EV_SYN: [
+        #     evdev.ecodes.SYN_REPORT,
+        #     evdev.ecodes.SYN_CONFIG,
+        #     evdev.ecodes.SYN_DROPPED,
+        #     evdev.ecodes.EV_FF,  # FIXME: Is that right?
+        # ],
+        evdev.ecodes.EV_KEY: [
+            evdev.ecodes.BTN_A,
+            evdev.ecodes.BTN_B,
+            evdev.ecodes.BTN_X,
+            evdev.ecodes.BTN_Y,
+            evdev.ecodes.BTN_TL,
+            evdev.ecodes.BTN_TR,
+            evdev.ecodes.ABS_Z,
+            evdev.ecodes.ABS_RZ,
+            evdev.ecodes.BTN_SELECT,
+            evdev.ecodes.BTN_START,
+            evdev.ecodes.BTN_THUMBL,
+            evdev.ecodes.BTN_THUMBR,
+            evdev.ecodes.ABS_HAT0X,
+            evdev.ecodes.ABS_HAT0X,
+            evdev.ecodes.ABS_HAT0Y,
+            evdev.ecodes.ABS_HAT0Y,
+            evdev.ecodes.BTN_MODE,
+        ],
+        evdev.ecodes.EV_ABS: [
+            (evdev.ecodes.ABS_X, evdev.AbsInfo(value=2672, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=1869, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_Z, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_RX, evdev.AbsInfo(value=613, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_RY, evdev.AbsInfo(value=280, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+            (evdev.ecodes.ABS_RZ, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_HAT0X, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+            (evdev.ecodes.ABS_HAT0Y, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+        ],
+        # FIXME: Add support for EV_FF
+        # evdev.ecodes.EV_FF: [
+        #     evdev.ecodes.FF_RUMBLE,
+        #     evdev.ecodes.FF_PERIODIC,
+        #     evdev.ecodes.FF_WAVEFORM_MIN,
+        #     evdev.ecodes.FF_TRIANGLE,
+        #     evdev.ecodes.FF_SINE,
+        #     evdev.ecodes.FF_MAX_EFFECTS,
+        # ],
+    },
     'standard': {
         # FIXME: WTF is EV_SYN and how do I do it?
         #        I think it's effectively a regular 'ping' from the controller
@@ -117,22 +165,86 @@ mapping_capabilities = {
     }
 }
 
+# FIXME: This is just for sbone. Something needs to be sorted out for everything.
+button_order = [
+            evdev.ecodes.BTN_A,
+            evdev.ecodes.BTN_B,
+            evdev.ecodes.BTN_X,
+            evdev.ecodes.BTN_Y,
+            evdev.ecodes.BTN_TL,
+            evdev.ecodes.BTN_TR,
+            evdev.ecodes.BTN_SELECT,
+            evdev.ecodes.BTN_START,
+            evdev.ecodes.BTN_MODE,
+            evdev.ecodes.BTN_THUMBL,
+            evdev.ecodes.BTN_THUMBR,
+        ],
+
+
+def create_cap(gamepad_info):
+    cap = {
+        evdev.ecodes.EV_KEY: [
+            evdev.ecodes.BTN_A
+            # evdev.ecodes.BTN_A + n for n in range(len(gamepad_info['buttons']))
+        ],
+        evdev.ecodes.EV_ABS: [
+            evdev.ecodes.ABS_X
+            # evdev.ecodes.ABS_X + n for n in range(len(gamepad_info['axes']))
+        ]
+    }
+    return cap
+
+
+def press_buttons(user_identifier, buttons):
+    # Note: thanks to _diff_state in ws_routes.py we don't need to worry about whether the buttons were pressed or not beforehand
+    js_dev = active_devices[user_identifier]
+    btn_caps = js_dev.capabilities()[evdev.ecodes.EV_KEY]
+
+#    assert len(buttons) == len(btn_caps)
+
+    for n in range(len(buttons)):
+        if buttons[n] is None:
+            # No change to this button, so skip it
+            continue
+
+        try:
+            #print(n, buttons, btn_caps, evdev.ecodes.BTN)
+            #if buttons[n]['pressed']:
+            #    print("Pressing", n, evdev.ecodes.BTN[btn_caps[n]])
+            #else:
+            #    print("Releasing", n, evdev.ecodes.BTN[btn_caps[n]])
+            js_dev.write(evdev.ecodes.EV_KEY, js_dev.browser_mapping[evdev.ecodes.EV_KEY][n], 1 if buttons[n]['pressed'] else 0)
+        except (IndexError, KeyError):
+            print("KeyError on button", n)
+            break
+
+    print("Syn")
+    js_dev.syn()
+
 
 def add_device(user_identifier, gamepad_info):
     print(user_identifier, "DEBUG: Adding device", gamepad_info)
 
     assert user_identifier not in active_devices, "Controller already connected"
     assert gamepad_info['mapping'] in mapping_capabilities, "Sorry, controller not supported"
+    # gamepad_caps = create_cap(gamepad_info)
     gamepad_caps = mapping_capabilities[gamepad_info['mapping']]
-    assert len(gamepad_info['buttons']) == len(gamepad_caps[evdev.ecodes.EV_KEY]), "Does not match expected button count"
-    assert len(gamepad_info['axes']) == len(gamepad_caps[evdev.ecodes.EV_ABS]), "Does not match expected axes count"
+    # print(len(gamepad_info['buttons']), len(gamepad_caps[evdev.ecodes.EV_KEY]))
+    # print(len(gamepad_info['axes']), len(gamepad_caps[evdev.ecodes.EV_ABS]))
+    # assert len(gamepad_info['buttons']) == len(gamepad_caps[evdev.ecodes.EV_KEY]), "Does not match expected button count"
+    # assert len(gamepad_info['axes']) == len(gamepad_caps[evdev.ecodes.EV_ABS]), "Does not match expected axes count"
 
-    active_devices[user_identifier] = evdev.UInput(
-        events=mapping_capabilities[gamepad_info['mapping']],
-        name=gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
+    js_dev = evdev.UInput(
+        events=gamepad_caps,
+        name="Microsoft X-Box One pad",  # gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
         vendor=gamepad_info.get('usb_vendor', 1),
         product=gamepad_info.get('usb_product', 1),
     )
+    # Querying the capabilities later actually returns something entirely different.
+    # So instead I need to make sure the mapping info stays with the device.
+    js_dev.browser_mapping = gamepad_caps
+    print(js_dev.capabilities())
+    active_devices[user_identifier] = js_dev
     print(active_devices)
     dev = active_devices[user_identifier]  # noqa: F841
 

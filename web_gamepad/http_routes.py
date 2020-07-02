@@ -25,11 +25,19 @@ def add_gamepad():
     # So I'm hacking my own xbox one in and taking some guesses at when to use it.
     # NOTE: Xbox One controller gets a "standard" mapping, and it's ID is "Microsoft Controller"
     # FIXME: Apparently Xbox 360 mappings are actually different depending on the web client's OS
-    if not gamepad['mapping'] and 'X-Box' in gamepad['id']:
-        assert len(gamepad['buttons']) == 11, "Not the number of buttons expected from an Xbox 360 controller"
-        assert len(gamepad['axes']) == 8, "Not the number of axes expected from an Xbox 360 controller"
-        # FIXME: Different from 'standard'?
-        gamepad['mapping'] = 'xbox'
+    if not gamepad['mapping']:
+        if 'X-Box' in gamepad['id']:
+            assert len(gamepad['buttons']) == 11, "Not the number of buttons expected from an Xbox 360 controller"
+            assert len(gamepad['axes']) == 8, "Not the number of axes expected from an Xbox 360 controller"
+            print("For reference. Xbox360 ID =", gamepad['id'])
+            # FIXME: Different from 'standard'?
+            gamepad['mapping'] = 'xb360'
+    elif gamepad['mapping'] == 'standard' and gamepad['id'].startswith("Microsoft Controller"):
+        # For some reason the browser seems to rename the Xbox One device ID.
+        # It makes no sense to me why it would change this ID, but not the 360, but it does
+        print("For reference. Xbone ID =", gamepad['id'])
+        gamepad['id'] = 'Microsoft X-Box One pad (' + gamepad['id'].rpartition('(')[2]
+        gamepad['mapping'] = 'xbone'
 
     # On my system (Chrome on Linux) the id ends with "(Vendor: 28de Product: 11ff)", so let's use that.
     # With gamepads recognised as "standard" it comes up as "(STANDARD GAMEPAD Vendor: 0079 Product: 0006)"

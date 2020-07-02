@@ -1,9 +1,11 @@
+import sys
 import pprint
 import json
 
 import flask
 
 from . import sockets
+from . import gamepad_injector
 
 message_states = {}
 
@@ -50,8 +52,18 @@ def change_gamepad(ws):
     while not ws.closed:
         new_state = json.loads(ws.receive())
         if new_state:  # We get an empty message as it closes
-            print(flask.session['uuid'], "input changed:", )
-            pprint.pprint(_diff_state(flask.session['uuid'], new_state))
-            ws.send("Thanks")
+          try:
+            if not flask.session['uuid'] in gamepad_injector.active_devices:
+                message_states[flask.session['uuid']] = new_state
+            else:
+                print(flask.session['uuid'], "input changed:", )
+                changed_state = _diff_state(flask.session['uuid'], new_state)
+                pprint.pprint(changed_state)
+                if 'buttons' in changed_state and any(changed_state['buttons']):
+                    gamepad_injector.press_buttons(flask.session['uuid'], changed_state['buttons'])
+          except:
+              print('EXCEPTON', sys.exc_info())
+          ws.send("Thanks")
 
     print(flask.session['uuid'], "disconnected from websocket")
+    gamepad_injector.remove_device(flask.session['uuid'])
