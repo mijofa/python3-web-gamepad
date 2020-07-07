@@ -15,23 +15,18 @@ def hello():
 def add_gamepad():
     gamepad = flask.request.json
 
-    if 'uinput' in gamepad['id']:
-        print("Ignoring uinput device from browser")
-        return "No thanks"
-
     # Javascript has a Gamepad.mapping field to determine what mapping the browser thinks it should use.
     #
     # It only really supports a "standard" mapping, which apparently X-box controllers normally aren't.
     # So I'm hacking my own xbox one in and taking some guesses at when to use it.
     # NOTE: Xbox One controller gets a "standard" mapping, and it's ID is "Microsoft Controller"
     # FIXME: Apparently Xbox 360 mappings are actually different depending on the web client's OS
-    if not gamepad['mapping']:
-        if 'X-Box' in gamepad['id']:
-            assert len(gamepad['buttons']) == 11, "Not the number of buttons expected from an Xbox 360 controller"
-            assert len(gamepad['axes']) == 8, "Not the number of axes expected from an Xbox 360 controller"
-            print("For reference. Xbox360 ID =", gamepad['id'])
-            # FIXME: Different from 'standard'?
-            gamepad['mapping'] = 'xb360'
+    if not gamepad['mapping'] and 'X-Box' in gamepad['id']:
+        assert len(gamepad['buttons']) == 11, "Not the number of buttons expected from an Xbox 360 controller"
+        assert len(gamepad['axes']) == 8, "Not the number of axes expected from an Xbox 360 controller"
+        print("For reference. Xbox360 ID =", gamepad['id'])
+        # FIXME: Different from 'standard'?
+        gamepad['mapping'] = 'xb360'
     elif gamepad['mapping'] == 'standard' and gamepad['id'].startswith("Microsoft Controller"):
         # For some reason the browser seems to rename the Xbox One device ID.
         # It makes no sense to me why it would change this ID, but not the 360, but it does
@@ -56,6 +51,5 @@ def add_gamepad():
 
 @app.route('/remove_gamepad', methods=['POST'])
 def remove_gamepad():
-    gamepad = flask.request.json
-    gamepad_injector.remove_device(flask.session['uuid'], gamepad)
+    gamepad_injector.remove_device(flask.session['uuid'])
     return "Thanks"

@@ -48,11 +48,15 @@ function init() {
     });
 }
 
-function post_gamepad_data(uri, data) {
+function post_gamepad_data(uri, data = null) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', uri, true);
     xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-    xhr.send(JSON.stringify(data, gamepad_jsonReplacer));
+    if (data) {
+        xhr.send(JSON.stringify(data, gamepad_jsonReplacer));
+    } else {
+        xhr.send()
+    }
 }
 
 

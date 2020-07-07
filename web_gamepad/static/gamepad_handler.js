@@ -12,19 +12,59 @@ function gamepad_init() {
         document.getElementById("gamepad_identify_button").onclick = gamepad_identifySelectedGamepad;
 
         window.addEventListener("gamepadconnected", evt => gamepad_updateSelector());
-        window.addEventListener("gamepaddisconnected", evt => gamepad_updateSelector());
         window.addEventListener("gamepaddisconnected", function (evt) {
             if (gamepad_isSelectedGamepad(evt.gamepad)) {
                 gamepad_selectorElement.selectedIndex = 0
-                window.dispatchEvent(new GamepadEvent('gamepadDisabled'));
-            }
+                gamepad_select()
+            };
+            gamepad_updateSelector();
         });
+
+        window.addEventListener("gamepadSelected", gamepad_createStateTable);
 
         return true
     } else {
         // FIXME: What do we do here?
 
         return false
+    }
+}
+
+function gamepad_createStateTable(evt) {
+    gamepad = evt.gamepad;
+
+    axes_table = document.getElementById("axes_output");
+    axes_table.innerHTML = '';
+
+    for (i = 0 ; i < gamepad.axes.length ; i++) {
+        row = document.createElement('tr');
+        axes_table.appendChild(row);
+
+        cell1 = document.createElement('td');
+        row.appendChild(cell1);
+
+        cell2 = document.createElement('td');
+        row.appendChild(cell2);
+
+        cell1.innerText = "Axes "+i;
+        cell2.innerText = gamepad.axes[i];
+    }
+
+    buttons_table = document.getElementById("buttons_output");
+    buttons_table.innerHTML = '';
+
+    for (i = 0 ; i < gamepad.buttons.length ; i++) {
+        row = document.createElement('tr');
+        buttons_table.appendChild(row);
+
+        cell1 = document.createElement('td');
+        row.appendChild(cell1);
+
+        cell2 = document.createElement('td');
+        row.appendChild(cell2);
+
+        cell1.innerText = "Button "+i;
+        cell2.innerText = gamepad.buttons[i].value;
     }
 }
 
@@ -167,6 +207,15 @@ function gamepad_inputLoopOnce() {
                 gamepad_oldState = g;
                 // FIXME: Should I really be using GamepadEvent here?
                 window.dispatchEvent(new GamepadEvent('gamepadInputUpdate', {'gamepad': g}));
+
+                axes_table = document.getElementById("axes_output");
+                buttons_table = document.getElementById("buttons_output");
+                for (i=0 ; i < g.axes.length ; i++) {
+                    axes_table.children[i].lastChild.innerText = g.axes[i];
+                }
+                for (i=0 ; i < g.buttons.length ; i++) {
+                    buttons_table.children[i].lastChild.innerText = g.buttons[i].value;
+                }
             }
         }
     }

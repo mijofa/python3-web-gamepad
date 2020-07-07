@@ -1,6 +1,6 @@
 import sys
-import pprint
 import json
+import traceback
 
 import flask
 
@@ -50,20 +50,23 @@ def change_gamepad(ws):
     print(flask.session['uuid'], "connected to websocket")
     ws.send("Greetings " + str(flask.session['uuid']))
     while not ws.closed:
-        new_state = json.loads(ws.receive())
-        if new_state:  # We get an empty message as it closes
-          try:
-            if not flask.session['uuid'] in gamepad_injector.active_devices:
-                message_states[flask.session['uuid']] = new_state
-            else:
-                print(flask.session['uuid'], "input changed:", )
-                changed_state = _diff_state(flask.session['uuid'], new_state)
-                pprint.pprint(changed_state)
-                if 'buttons' in changed_state and any(changed_state['buttons']):
-                    gamepad_injector.press_buttons(flask.session['uuid'], changed_state['buttons'])
-          except:
-              print('EXCEPTON', sys.exc_info())
-          ws.send("Thanks")
+        data = ws.receive()
+        if data:  # We get am empty message as it closes  # FIXME: check ws.closed again?
+            new_state = json.loads(data)
+            try:
+                if not flask.session['uuid'] in gamepad_injector.active_devices:
+                    message_states[flask.session['uuid']] = new_state
+                else:
+                    # print(flask.session['uuid'], "input changed:", )
+                    changed_state = _diff_state(flask.session['uuid'], new_state)
+                    if 'buttons' in changed_state and any(changed_state['buttons']):
+                        gamepad_injector.press_buttons(flask.session['uuid'], changed_state['buttons'])
+                    if 'axes' in changed_state and any((a is None for a in changed_state['axes'])):
+                        gamepad_injector.move_axes(flask.session['uuid'], changed_state['axes'])
+            except:  # noqa: E722
+                print('EXCEPTON', flask.session['uuid'], file=sys.stderr)
+                traceback.print_tb(sys.exc_info()[2])
+            ws.send("Thanks")
 
     print(flask.session['uuid'], "disconnected from websocket")
     gamepad_injector.remove_device(flask.session['uuid'])
