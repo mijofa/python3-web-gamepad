@@ -1,12 +1,94 @@
+import threading
+
 # evdev used because I don't think python-uinput is maintained anymore,
 # and the documentation is lacking
 import evdev
 import evdev.ecodes
 
+from . import ws_routes
+
 
 # Gets populated as each controller is added
 # Will be a mapping of {UUID: {Index: UInput_device}}
 active_devices = {}
+
+
+class FF_handler(object):
+    # Normally threads can't be restarted, but I want this one to be restartable
+    _thread = None
+
+    def start(self):
+        if self._thread and self._thread.is_alive():
+            # Already running, ignore request
+            return
+        else:
+            # It's either finished or never been started
+            self._thread = threading.Thread(target=self.run)
+            self._thread.start()
+
+    def _upload_effect(self, user_identifier, effect):
+        js = active_devices[user_identifier]
+        if effect.id in js.ff_effects:
+            ws_routes.reset_ff_effect(user_identifier)
+        js.ff_effects[effect.id] = effect
+
+    def _convert_effect(self, effect):
+        # Turns the evdev.ff.effect into a JSON object for Javascript to understand
+        # TODO: Figure out the ramp up/down things rather than just the basic rumble effect
+        js_effect = {}
+        js_effect['startDelay'] = effect.ff_replay.delay
+        js_effect['duration'] = effect.ff_replay.length
+        # FIXME: Is 0xffff a legitimate max?
+        js_effect['weakMagnitude'] = min(1, effect.u.ff_rumble_effect.weak_magnitude / 0xffff)
+        js_effect['strongMagnitude'] = min(1, effect.u.ff_rumble_effect.strong_magnitude / 0xffff)
+        return js_effect
+
+    def run(self):  # noqa: C901
+        while active_devices:
+            # Copying the keys list so as to let the dict get updated during iteration
+            for user_identifier in list(active_devices.keys()):
+                try:
+                    js = active_devices[user_identifier]
+                    ev = js.read_one()
+                except (KeyError, OSError):
+                    # Device has been closed or removed from list
+                    continue
+                if ev:
+                    # FF works by uploading a programmed rumble pattern,
+                    # then later on playing that rumble pattern,
+                    # and deleting them all when finished
+                    if ev.type == evdev.ecodes.EV_UINPUT:
+                        # This is the upload
+                        if ev.code == evdev.ecodes.UI_FF_UPLOAD:
+                            upload = js.begin_upload(ev.value)
+                            print("Event uploading", upload.effect_id, ev.value)
+                            self._upload_effect(user_identifier, upload.effect)
+                            js.end_upload(upload)
+                        # This is the deleting
+                        elif ev.code == evdev.ecodes.UI_FF_ERASE:
+                            erase = js.begin_erase(ev.value)
+                            assert erase.effect_id in js.ff_effects
+                            js.end_erase(erase)
+                            # FIXME: This resets all effects, not just the one being erased
+                            if ev.code in js.ff_effects:
+                                print(f"{user_identifier} erasing and resetting ff effect")
+                                ws_routes.reset_ff_effect(user_identifier)
+                                js.ff_effects.pop(erase.effect_id)
+                    elif ev.type == evdev.ecodes.EV_FF:
+                        # And this is the playback
+                        if ev.value:
+                            js_effect = self._convert_effect(js.ff_effects[ev.code])
+                            print(f"{user_identifier} playing ff effect {js_effect}")
+                            ws_routes.send_ff_effect(user_identifier, js_effect)
+                        else:
+                            if ev.code in js.ff_effects:
+                                print(f"{user_identifier} resetting ff effect")
+                                ws_routes.reset_ff_effect(user_identifier)
+
+        print("Thread finished")
+
+
+ff_thread = FF_handler()
 
 
 class actually_an_axis(object):
@@ -160,7 +242,7 @@ def assume_caps_and_mapping(js_gamepad):
                               if not isinstance(key, actually_an_axis)],
         evdev.ecodes.EV_ABS: [axis for axis in mapping[evdev.ecodes.EV_ABS]],
         # FIXME: Add support for EV_FF
-        # ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
+        evdev.ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
     }
 
     for btn in mapping[evdev.ecodes.EV_KEY].copy():
@@ -234,8 +316,10 @@ def add_device(user_identifier, gamepad_info):
     # Querying the capabilities later actually returns something entirely different.
     # So instead I need to make sure the mapping info stays with the device.
     js_dev.mapping = gamepad_mapping
+    js_dev.ff_effects = {}  # Used in FF_handler
     active_devices[user_identifier] = js_dev
     dev = active_devices[user_identifier]  # noqa: F841
+    ff_thread.start()
 
 
 def remove_device(user_identifier):

@@ -8,6 +8,7 @@ from . import sockets
 from . import gamepad_injector
 
 message_states = {}
+active_websockets = {}
 
 
 # AIUI, UInput needs specific "button A press down" actions,
@@ -44,29 +45,55 @@ def _diff_state(user_identifier, new_state):
     return diffed_state
 
 
+def send_ff_effect(user_identifier, effect):
+    ws = active_websockets.get(user_identifier)
+    if ws:
+        message = {"command": "ffEffectPlay", "data": effect}
+        ws.send(json.dumps(message))
+
+
+def reset_ff_effect(user_identifier):
+    ws = active_websockets.get(user_identifier)
+    if ws:
+        message = {"command": "ffEffectReset"}
+        ws.send(json.dumps(message))
+
+
 ## This is the entry point for gamepad inputs after the device has been setup
 @sockets.route('/change_gamepad')
 def change_gamepad(ws):
-    print(flask.session['uuid'], "connected to websocket")
-    ws.send("Greetings " + str(flask.session['uuid']))
+    user_identifier = flask.session['uuid']
+
+    if user_identifier in active_websockets:
+        # Only one connection per user allowed at a time
+        print(user_identifier, "already connected to websocket")
+        ws.send('{"command": "error", "data": "Already connected ' + str(user_identifier) + '"}')
+        ws.close()
+    else:
+        print(user_identifier, "connected to websocket")
+        active_websockets[user_identifier] = ws
+
+    ws.send('{"command": "ping", "data": "Greetings ' + str(user_identifier) + '"}')
     while not ws.closed:
+        # FIXME: Do this in a non-blocking way so we can handle ff effects here in this same thread
         data = ws.receive()
         if data:  # We get am empty message as it closes  # FIXME: check ws.closed again?
             new_state = json.loads(data)
             try:
-                if not flask.session['uuid'] in gamepad_injector.active_devices:
-                    message_states[flask.session['uuid']] = new_state
+                if user_identifier not in gamepad_injector.active_devices:
+                    message_states[user_identifier] = new_state
                 else:
-                    # print(flask.session['uuid'], "input changed:", )
-                    changed_state = _diff_state(flask.session['uuid'], new_state)
+                    # print(user_identifier, "input changed:", )
+                    changed_state = _diff_state(user_identifier, new_state)
                     if 'buttons' in changed_state and any(changed_state['buttons']):
-                        gamepad_injector.press_buttons(flask.session['uuid'], changed_state['buttons'])
+                        gamepad_injector.press_buttons(user_identifier, changed_state['buttons'])
                     if 'axes' in changed_state and any((a is not None for a in changed_state['axes'])):
-                        gamepad_injector.move_axes(flask.session['uuid'], changed_state['axes'])
+                        gamepad_injector.move_axes(user_identifier, changed_state['axes'])
             except:  # noqa: E722
-                print('EXCEPTON', flask.session['uuid'], file=sys.stderr)
+                print('EXCEPTON', user_identifier, file=sys.stderr)
                 traceback.print_tb(sys.exc_info()[2])
-            ws.send("Thanks")
+            ws.send('{"command": "ping", "data": "Thanks"}')
 
-    print(flask.session['uuid'], "disconnected from websocket")
-    gamepad_injector.remove_device(flask.session['uuid'])
+    print(user_identifier, "disconnected from websocket")
+    gamepad_injector.remove_device(user_identifier)
+    active_websockets.pop(user_identifier)

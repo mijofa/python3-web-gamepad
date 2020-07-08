@@ -41,9 +41,6 @@ function init() {
         post_gamepad_data(gamepad_close_uri);
     });
     window.addEventListener("gamepadInputUpdate", function(evt) {
-        write_debug("Gamepad changed: "+evt.gamepad.id)
-
-        // TODO: Send input changes via websocket with JSON
         websocket_sendMessage(JSON.stringify(evt.gamepad, gamepad_jsonReplacer));
     });
 }

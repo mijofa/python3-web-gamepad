@@ -40,8 +40,16 @@ function websocket_onClose(evt) {
 
 function websocket_onMessage(evt)
 {
-  write_debug('Websocket recieved: ' + evt.data);
-//  websocket.close();
+//   write_debug('Websocket recieved: ' + evt.data);
+    message = JSON.parse(evt.data);
+    if (message['command'] != 'ping') {
+        write_debug('Command recieved: ' + message['command'])
+    }
+    if (message['command'] == "ffEffectPlay") {
+        gamepad_ffEffectPlay(message['data'])
+    } else if (message['command'] == "ffEffectReset") {
+        gamepad_ffEffectReset()
+    }
 }
 
 function websocket_onError(evt)
@@ -51,6 +59,6 @@ function websocket_onError(evt)
 
 function websocket_sendMessage(message)
 {
-  write_debug("Websocket sent: " + message);
+//  write_debug("Websocket sent: " + message);
   websocket.send(message);
 }

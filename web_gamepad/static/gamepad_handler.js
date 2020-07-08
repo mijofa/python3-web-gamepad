@@ -254,3 +254,27 @@ function gamepad_jsonReplacer(key, value) {
         return value
     }
 }
+
+function gamepad_ffEffectPlay(effect_params) {
+    for (g of navigator.getGamepads()) {
+        if (g && g.connected && gamepad_isSelectedGamepad(g)) {
+            if (effect_params['duration'] > 4000) {
+                // FIXME: This is dumb, fix this properly
+                //        Doing a playEffect().then(playEffect) until the entire duration is reached works.
+                //        Not sure how to nicely automate that though
+                effect_params['duration'] = 4000
+            }
+            g.vibrationActuator.playEffect("dual-rumble", effect_params)
+        }
+    }
+}
+
+function gamepad_ffEffectReset(effect_params) {
+    for (g of navigator.getGamepads()) {
+        if (g && g.connected && gamepad_isSelectedGamepad(g)) {
+            // This cancels all vibration effects,
+            // but the browser seems to only be able to handle one at a time anyway
+            g.vibrationActuator.reset()
+        }
+    }
+}
