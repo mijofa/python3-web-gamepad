@@ -241,8 +241,7 @@ def add_device(user_identifier, gamepad_info):
 def remove_device(user_identifier):
     print(user_identifier, "DEBUG: Removing device")
 
-    assert user_identifier in active_devices, "Controller not connected"
-
-    # Close the UInput device and remove it from the stack
-    active_devices[user_identifier].close()
-    active_devices.pop(user_identifier)
+    if user_identifier in active_devices:
+        # Close the UInput device and remove it from the stack
+        active_devices[user_identifier].close()
+        active_devices.pop(user_identifier)
