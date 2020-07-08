@@ -61,7 +61,7 @@ def change_gamepad(ws):
                     changed_state = _diff_state(flask.session['uuid'], new_state)
                     if 'buttons' in changed_state and any(changed_state['buttons']):
                         gamepad_injector.press_buttons(flask.session['uuid'], changed_state['buttons'])
-                    if 'axes' in changed_state and any((a is None for a in changed_state['axes'])):
+                    if 'axes' in changed_state and any((a is not None for a in changed_state['axes'])):
                         gamepad_injector.move_axes(flask.session['uuid'], changed_state['axes'])
             except:  # noqa: E722
                 print('EXCEPTON', flask.session['uuid'], file=sys.stderr)
