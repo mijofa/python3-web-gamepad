@@ -13,6 +13,17 @@ it's a pain to work properly behind a reverse proxy.
 And I don't want any extra complexities like that possibly slowing things down anyway.
 
 
+Bug with Bluetooth Xbox One controller
+--------------------------------------
+This is not specific to this project, nor even the web browser, just something I found while working on this.
+
+It seems that when connecting the controller wirelessly, some applications (but not jstest) miss a couple of buttons, specifically X and RB.
+Every other button gets offset slightly such that I can still fulfill some of those functions (Y instead of X, select instead of RB) but it's weird.
+Also the guide button seems to send an XF86HomePage *keyboard* button, which is even more weird.
+
+Even Steam is fucking this up, so can't take advantage of Steam Input to workaround the issue by emulating a 360 controller or anything like that.
+
+
 Bug with Steam controller
 -------------------------
 UPDATE: Confirmed to only be an issue with Steam simulating X-360 input
