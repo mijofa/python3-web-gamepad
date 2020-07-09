@@ -103,22 +103,8 @@ class actually_an_axis(object):
         return f"<actually_an_axis object {self.axis_cap} * {self.multiplier}>"
 
 
-# FIXME: This is just for sbone. Something needs to be sorted out for everything.
-button_order = [
-    evdev.ecodes.BTN_A,
-    evdev.ecodes.BTN_B,
-    evdev.ecodes.BTN_X,
-    evdev.ecodes.BTN_Y,
-    evdev.ecodes.BTN_TL,
-    evdev.ecodes.BTN_TR,
-    evdev.ecodes.BTN_SELECT,
-    evdev.ecodes.BTN_START,
-    evdev.ecodes.BTN_MODE,
-    evdev.ecodes.BTN_THUMBL,
-    evdev.ecodes.BTN_THUMBR,
-],
-
-# FIXME: Do I really need to use a dict with the list length as the keys?
+# FIXME: Do I really need to use the list length as the keys?
+# Only really tested with X-Box One & X-Box 360 controllers
 assumed_button_caps = {
     17: [
         evdev.ecodes.BTN_A,
