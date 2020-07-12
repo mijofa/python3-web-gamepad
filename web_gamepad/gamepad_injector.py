@@ -215,6 +215,17 @@ assumed_axes_caps = {
         (evdev.ecodes.ABS_RX, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
         (evdev.ecodes.ABS_RY, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
     ],
+    # FIXME: Entirely untested PS3 layout
+    10: [
+        (evdev.ecodes.ABS_X, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+        (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
+        (evdev.ecodes.ABS_Z, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+        (evdev.ecodes.ABS_RZ, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+        (evdev.ecodes.ABS_MT_TOUCH_MAJOR, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+        (evdev.ecodes.ABS_MT_TOUCH_MINOR, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+        (evdev.ecodes.ABS_MT_WIDTH_MAJOR, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
+        (evdev.ecodes.ABS_MT_WIDTH_MINOR, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
+    ],
 }
 
 
@@ -293,9 +304,18 @@ def add_device(user_identifier, gamepad_info):
     assert user_identifier not in active_devices, "Controller already connected"
     gamepad_caps, gamepad_mapping = assume_caps_and_mapping(gamepad_info)
 
+    # FIXME: Why won't uinput work with device names that aren't already recognised?
+    #        Idually I'd use this instead: gamepad_info['id'][:80]
+    # NOTE: I don't think the device name actually matters at all anyway.
+    #       Especially if we're getting the vendor & product ID anyway
+    gamepad_name = "Microsoft X-Box One pad"
+    if len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 10:
+        # It's probably a PS3 controller, name it as such
+        gamepad_name = "Sony PLAYSTATION(R)3 Controller"
+
     js_dev = evdev.UInput(
         events=gamepad_caps,
-        name="Microsoft X-Box One pad",  # gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
+        name=gamepad_name,  # gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
         vendor=gamepad_info.get('usb_vendor', 1),
         product=gamepad_info.get('usb_product', 1),
     )
@@ -304,8 +324,8 @@ def add_device(user_identifier, gamepad_info):
     js_dev.mapping = gamepad_mapping
     js_dev.ff_effects = {}  # Used in FF_handler
     active_devices[user_identifier] = js_dev
-    dev = active_devices[user_identifier]  # noqa: F841
     ff_thread.start()
+    # dev = active_devices[user_identifier]; breakpoint()
 
 
 def remove_device(user_identifier):
