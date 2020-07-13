@@ -31,6 +31,7 @@ UPDATE: Confirmed to only be an issue with Steam simulating X-360 input
 
 It's getting a bit funky with my Steam controller, but I think that's because I'm running the client & server on the same system.
 What seems to happen is this:
+
 1. Steam controller emulating X-360 connects to Chrome at index:0
 2. I select it
 3. Chrome tells the server, then immediately sees a new X-360 controller (simulated by this) at index:1 and the Steam controller disappears
