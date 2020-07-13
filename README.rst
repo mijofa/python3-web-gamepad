@@ -1,10 +1,13 @@
-A lightweight webserver that will allow anyone to open the webpage and use it as a game controller proxy kind of thing.
+A lightweight webserver that will allow anyone to open the webpage and use it to proxy their game controller inputs to the web server.
 
-This should make local multiplayer games work online when used in conjunction with something like Jitsi for screensharing,
-without the non-local players needing to install (or buy) any client apps on their own devices.
+This should make local multiplayer games work online when used in conjunction with something like Jitsi or Discord for screensharing,
+without the remote players needing to install (or buy) any client apps on their own devices,
+nor have the OS & hardware required to run the game.
 
 A feature to be added in future is an onscreen virtual gamepad,
-which should allow people to use their phones as the gamepad rather than needing one connected to the computer via USB.
+which should allow people to use their touchscreen phones as the gamepad rather than needing one connected to the computer via USB.
+
+
 
 Notes
 =====
