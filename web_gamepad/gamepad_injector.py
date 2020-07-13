@@ -305,13 +305,18 @@ def add_device(user_identifier, gamepad_info):
     gamepad_caps, gamepad_mapping = assume_caps_and_mapping(gamepad_info)
 
     # FIXME: Why won't uinput work with device names that aren't already recognised?
-    #        Idually I'd use this instead: gamepad_info['id'][:80]
+    #        Ideally I'd use this instead: gamepad_info['id'][:80]
     # NOTE: I don't think the device name actually matters at all anyway.
-    #       Especially if we're getting the vendor & product ID anyway
-    gamepad_name = "Microsoft X-Box One pad"
+    #       Especially if we're getting the vendor & product ID
     if len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 10:
         # It's probably a PS3 controller, name it as such
         gamepad_name = "Sony PLAYSTATION(R)3 Controller"
+    elif len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 6 and len(gamepad_mapping[evdev.ecodes.EV_BTN]) == 16:
+        # It's probably a Switch Pro controller, name it as such
+        gamepad_name = "Pro Controller"
+    else:
+        # Otherwise, pretend it's an X-box One controller and hope for the best
+        gamepad_name = "Microsoft X-Box One pad"
 
     js_dev = evdev.UInput(
         events=gamepad_caps,
