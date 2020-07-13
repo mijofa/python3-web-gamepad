@@ -188,6 +188,30 @@ assumed_button_caps = {
         evdev.ecodes.BTN_THUMBL,
         evdev.ecodes.BTN_THUMBR,
     ],
+    # # Untested Switch Pro Controller layout
+    # # I have no idea what order these belong in, because for some reason my controller only works on Linux via Steam
+    # # FIXME: Test from Windows
+    # 18: [
+    #     evdev.ecodes.BTN_TRIGGER,
+    #     evdev.ecodes.BTN_THUMB,
+    #     evdev.ecodes.BTN_THUMB2,
+    #     evdev.ecodes.BTN_TOP,
+    #     evdev.ecodes.BTN_TOP2,
+    #     evdev.ecodes.BTN_PINKIE,
+    #     evdev.ecodes.BTN_BASE,
+    #     evdev.ecodes.BTN_BASE2,
+    #     evdev.ecodes.BTN_BASE3,
+    #     evdev.ecodes.BTN_BASE4,
+    #     evdev.ecodes.BTN_BASE5,
+    #     evdev.ecodes.BTN_BASE6,
+    #     # WTF are these?
+    #     300,
+    #     301,
+    #     302,
+    #     evdev.ecodes.BTN_DEAD,
+    #     evdev.ecodes.BTN_TRIGGER_HAPPY1,
+    #     evdev.ecodes.BTN_TRIGGER_HAPPY2,
+    # ],
 }
 assumed_axes_caps = {
     8: [
@@ -200,7 +224,6 @@ assumed_axes_caps = {
         (evdev.ecodes.ABS_HAT0X, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
         (evdev.ecodes.ABS_HAT0Y, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
     ],
-    # FIXME: What about analog D-pad but not triggers?
     6: [
         (evdev.ecodes.ABS_X, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
         (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
@@ -209,6 +232,15 @@ assumed_axes_caps = {
         (evdev.ecodes.ABS_RY, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
         (evdev.ecodes.ABS_RZ, evdev.AbsInfo(value=0, min=0, max=1023, fuzz=0, flat=0, resolution=0)),
     ],
+    # FIXME: What about analog D-pad but not triggers?
+    # 6: [
+    #     (evdev.ecodes.ABS_X, evdev.AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=4095, resolution=0)),
+    #     (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=0, min=0, max=65535, fuzz=0, flat=4095, resolution=0)),
+    #     (evdev.ecodes.ABS_Z, evdev.AbsInfo(value=0, min=0, max=65535, fuzz=255, flat=4095, resolution=0)),
+    #     (evdev.ecodes.ABS_RZ, evdev.AbsInfo(value=0, min=0, max=65535, fuzz=255, flat=4095, resolution=0)),
+    #     (evdev.ecodes.ABS_HAT0X, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+    #     (evdev.ecodes.ABS_HAT0Y, evdev.AbsInfo(value=0, min=-1, max=1, fuzz=0, flat=0, resolution=0)),
+    # ],
     4: [
         (evdev.ecodes.ABS_X, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
         (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
@@ -310,12 +342,14 @@ def add_device(user_identifier, gamepad_info):
     #       Especially if we're getting the vendor & product ID
     if len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 10:
         # It's probably a PS3 controller, name it as such
+        # FIXME: Take a look at the gamepad_info['id'] to make this guess more accurately
         gamepad_name = "Sony PLAYSTATION(R)3 Controller"
-    elif len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 6 and len(gamepad_mapping[evdev.ecodes.EV_BTN]) == 16:
-        # It's probably a Switch Pro controller, name it as such
-        gamepad_name = "Pro Controller"
+#    elif len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 6 and len(gamepad_mapping[evdev.ecodes.EV_KEY]) == 18:
+#        # It's probably a Switch Pro controller, name it as such
+#        gamepad_name = "Nintendo Co., Ltd. Pro Controller"
     else:
         # Otherwise, pretend it's an X-box One controller and hope for the best
+        # FIXME: Xbox 360 controller is somewhat more standard, should I do that instead?
         gamepad_name = "Microsoft X-Box One pad"
 
     js_dev = evdev.UInput(
