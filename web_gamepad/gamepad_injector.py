@@ -6,10 +6,10 @@ import evdev
 import evdev.ecodes
 
 from . import ws_routes
-
+from .evdev_workaround import UInput
 
 # Gets populated as each controller is added
-# Will be a mapping of {UUID: {Index: UInput_device}}
+# Will be a mapping of {UUID: UInput_device}
 active_devices = {}
 
 
@@ -336,28 +336,13 @@ def add_device(user_identifier, gamepad_info):
     assert user_identifier not in active_devices, "Controller already connected"
     gamepad_caps, gamepad_mapping = assume_caps_and_mapping(gamepad_info)
 
-    # FIXME: Why won't uinput work with device names that aren't already recognised?
-    #        Ideally I'd use this instead: gamepad_info['id'][:80]
-    # NOTE: I don't think the device name actually matters at all anyway.
-    #       Especially if we're getting the vendor & product ID
-    if len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 10:
-        # It's probably a PS3 controller, name it as such
-        # FIXME: Take a look at the gamepad_info['id'] to make this guess more accurately
-        gamepad_name = "Sony PLAYSTATION(R)3 Controller"
-#    elif len(gamepad_mapping[evdev.ecodes.EV_ABS]) == 6 and len(gamepad_mapping[evdev.ecodes.EV_KEY]) == 18:
-#        # It's probably a Switch Pro controller, name it as such
-#        gamepad_name = "Nintendo Co., Ltd. Pro Controller"
-    else:
-        # Otherwise, pretend it's an X-box One controller and hope for the best
-        # FIXME: Xbox 360 controller is somewhat more standard, should I do that instead?
-        gamepad_name = "Microsoft X-Box One pad"
-
-    js_dev = evdev.UInput(
+    js_dev = UInput(
         events=gamepad_caps,
-        name=gamepad_name,  # gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
+        name=gamepad_info['id'][:80],  # UInput names must be no longer than 80 characters
         vendor=gamepad_info.get('usb_vendor', 1),
         product=gamepad_info.get('usb_product', 1),
     )
+
     # Querying the capabilities later actually returns something entirely different.
     # So instead I need to make sure the mapping info stays with the device.
     js_dev.mapping = gamepad_mapping
