@@ -6,6 +6,14 @@ from . import app
 from . import gamepad_injector
 
 
+# Blink/Chrome's gamepad ID ends with "(Vendor: 28de Product: 11ff)", so let's use that.
+# NOTE: With gamepads recognised as "standard" it comes up as "(STANDARD GAMEPAD Vendor: 0079 Product: 0006)"
+# Gecko/Firefox apparently starts the ID with "28de-11ff-" instead, we can use that too.
+# FIXME: Can we get this info from Webkit?
+usb_ids_re_blink = re.compile(r"(?P<name>.*) \((STANDARD GAMEPAD )?Vendor: (?P<vendor>.*) Product: (?P<product>.*)\)")
+usb_ids_re_gecko = re.compile(r"(?P<vendor>[0-9A-Fa-f]{4})-(?P<product>[0-9A-Fa-f]{4})-(?P<name>.*)")
+
+
 @app.route('/')
 def hello():
     return 'Hello World!'
@@ -34,14 +42,10 @@ def add_gamepad():
         gamepad['id'] = 'Microsoft X-Box One pad (' + gamepad['id'].rpartition('(')[2]
         gamepad['mapping'] = 'xbone'
 
-    # On my system (Chrome on Linux) the id ends with "(Vendor: 28de Product: 11ff)", so let's use that.
-    # With gamepads recognised as "standard" it comes up as "(STANDARD GAMEPAD Vendor: 0079 Product: 0006)"
-    # We don't need this, but theoretically it'll help games setup a default mapping
-    # NOTE: This won't match the ID field of removal and change updates events, but we don't care about the ID there
-    usb_ids_re = re.match("(?P<name>.*) \\((STANDARD GAMEPAD )?Vendor: (?P<vendor>.*) Product: (?P<product>.*)\\)", gamepad['id'])
+    usb_ids_re = usb_ids_re_blink.match(gamepad['id']) or usb_ids_re_gecko.match(gamepad['id'])
     if usb_ids_re:
         gamepad['id'] = usb_ids_re.group('name')
-        # I think evdev.UInput expects the hex string to be converted to an int
+        # evdev.UInput expects an int object, not a hex string
         gamepad['usb_vendor'] = int(usb_ids_re.group('vendor'), 16)
         gamepad['usb_product'] = int(usb_ids_re.group('product'), 16)
 
