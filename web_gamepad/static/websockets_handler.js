@@ -42,13 +42,12 @@ function websocket_onMessage(evt)
 {
 //   write_debug('Websocket recieved: ' + evt.data);
     message = JSON.parse(evt.data);
-    if (message['command'] != 'ping') {
-        write_debug('Command recieved: ' + message['command'])
-    }
     if (message['command'] == "ffEffectPlay") {
         gamepad_ffEffectPlay(message['data'])
     } else if (message['command'] == "ffEffectReset") {
         gamepad_ffEffectReset()
+    } else if (message['command'] != "ping") {
+        write_debug('Command recieved: ' + message['command'])
     }
 }
 
