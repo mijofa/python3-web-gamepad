@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # This is simply to assist with creating the capability mappings based on controllers plugged in to the computer directly
 # It will need some manual massaging, especially around EV_SYN
+
+# OBSOLETE. Use: evdev.util.resolve_ecodes_dict
+# Honestly I should've used that from the beginning
+
 import sys
 
 import evdev
