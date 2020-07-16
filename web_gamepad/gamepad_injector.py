@@ -300,7 +300,7 @@ def assume_caps_and_mapping(js_gamepad):
                               if not isinstance(key, actually_an_axis)],
         evdev.ecodes.EV_ABS: [axis for axis in mapping[evdev.ecodes.EV_ABS]],
         # FIXME: Add support for EV_FF
-        evdev.ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
+#        evdev.ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
     }
 
     for btn in mapping[evdev.ecodes.EV_KEY].copy():
