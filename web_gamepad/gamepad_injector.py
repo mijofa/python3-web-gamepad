@@ -212,6 +212,26 @@ assumed_button_caps = {
     #     evdev.ecodes.BTN_TRIGGER_HAPPY1,
     #     evdev.ecodes.BTN_TRIGGER_HAPPY2,
     # ],
+    # # Actual layout as reported by a PS3 controller plugged into boros.cyber
+    # 17: [
+    #     evdev.ecodes.BTN_SOUTH,  # Same as BTN_A
+    #     evdev.ecodes.BTN_EAST,   # Same as BTN_B
+    #     evdev.ecodes.BTN_NORTH,  # Same as BTN_X
+    #     evdev.ecodes.BTN_WEST,   # Same as BTN_Y
+    #     evdev.ecodes.BTN_TL,
+    #     evdev.ecodes.BTN_TR,
+    #     evdev.ecodes.BTN_TL2,
+    #     evdev.ecodes.BTN_TR2,
+    #     evdev.ecodes.BTN_SELECT,
+    #     evdev.ecodes.BTN_START,
+    #     evdev.ecodes.BTN_MODE,
+    #     evdev.ecodes.BTN_THUMBL,
+    #     evdev.ecodes.BTN_THUMBR,
+    #     evdev.ecodes.BTN_DPAD_UP,
+    #     evdev.ecodes.BTN_DPAD_DOWN,
+    #     evdev.ecodes.BTN_DPAD_LEFT,
+    #     evdev.ecodes.BTN_DPAD_RIGHT,
+    # ],
 }
 assumed_axes_caps = {
     8: [
@@ -248,6 +268,15 @@ assumed_axes_caps = {
         (evdev.ecodes.ABS_RY, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=16, flat=128, resolution=0)),
     ],
     # FIXME: Entirely untested PS3 layout
+    # # Actual layout as reported by a PS3 controller plugged into boros.cyber
+    # 6: [
+    #     (evdev.ecodes.ABS_X, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    #     (evdev.ecodes.ABS_Y, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    #     (evdev.ecodes.ABS_Z, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    #     (evdev.ecodes.ABS_RX, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    #     (evdev.ecodes.ABS_RY, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    #     (evdev.ecodes.ABS_RZ, AbsInfo(value=0, min=0, max=255, fuzz=0, flat=15, resolution=0),
+    # ],
     10: [
         (evdev.ecodes.ABS_X, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
         (evdev.ecodes.ABS_Y, evdev.AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=128, resolution=0)),
