@@ -256,6 +256,9 @@ function gamepad_jsonReplacer(key, value) {
 }
 
 function gamepad_ffEffectPlay(effect_params) {
+    if (window.navigator.vibrate) {
+        window.navigator.vibrate(effect_params['duration'])
+    }
     for (g of navigator.getGamepads()) {
         if (g && g.connected && gamepad_isSelectedGamepad(g)) {
             if (effect_params['duration'] > 4000) {
@@ -270,6 +273,9 @@ function gamepad_ffEffectPlay(effect_params) {
 }
 
 function gamepad_ffEffectReset(effect_params) {
+    if (window.navigator.vibrate) {
+        window.navigator.vibrate(0)
+    }
     for (g of navigator.getGamepads()) {
         if (g && g.connected && gamepad_isSelectedGamepad(g)) {
             // This cancels all vibration effects,
