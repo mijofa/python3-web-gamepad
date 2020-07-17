@@ -28,8 +28,10 @@ class FF_handler(object):
 
     def _upload_effect(self, user_identifier, effect):
         js = active_devices[user_identifier]
-        if effect.id in js.ff_effects:
+        if js.active_ff_effect and effect.id == js.active_ff_effect.id:
+            # We're replacing the active effect, so reset the active effect
             ws_routes.reset_ff_effect(user_identifier)
+            js.active_ff_effect = None
         js.ff_effects[effect.id] = effect
 
     def _convert_effect(self, effect):
@@ -37,7 +39,7 @@ class FF_handler(object):
         # TODO: Figure out the ramp up/down things rather than just the basic rumble effect
         js_effect = {}
         js_effect['startDelay'] = effect.ff_replay.delay
-        js_effect['duration'] = effect.ff_replay.length
+        js_effect['duration'] = max(effect.ff_replay.length, 10)  # Make sure it lasts at least 10ms
         # FIXME: Is 0xffff a legitimate max?
         js_effect['weakMagnitude'] = min(1, effect.u.ff_rumble_effect.weak_magnitude / 0xffff)
         js_effect['strongMagnitude'] = min(1, effect.u.ff_rumble_effect.strong_magnitude / 0xffff)
@@ -73,17 +75,24 @@ class FF_handler(object):
                             if ev.code in js.ff_effects:
                                 print(f"{user_identifier} erasing and resetting ff effect")
                                 ws_routes.reset_ff_effect(user_identifier)
+                                js.active_ff_effect = None
                                 js.ff_effects.pop(erase.effect_id)
                     elif ev.type == evdev.ecodes.EV_FF:
                         # And this is the playback
                         if ev.value:
-                            js_effect = self._convert_effect(js.ff_effects[ev.code])
-                            print(f"{user_identifier} playing ff effect {js_effect}")
-                            ws_routes.send_ff_effect(user_identifier, js_effect)
-                        else:
                             if ev.code in js.ff_effects:
-                                print(f"{user_identifier} resetting ff effect")
+                                js.active_ff_effect = js.ff_effects[ev.code]
+                                js_effect = self._convert_effect(js.active_ff_effect)
+                                print(f"{user_identifier} playing ff effect {js_effect}")
+                                ws_routes.send_ff_effect(user_identifier, js_effect)
+                            else:
+                                print(f"{user_identifier} ff effect {ev.code} not found for {js}")
+                        else:
+                            # FIXME: Since we only really support playing one effect at a time,
+                            #        should we just cancel it regardless of whether we have this on in ff_effects or not?
+                            if js.active_ff_effect and ev.code == js.active_ff_effect.id:
                                 ws_routes.reset_ff_effect(user_identifier)
+                                js.active_ff_effect = None
 
         print("Thread finished")
 
@@ -300,7 +309,7 @@ def assume_caps_and_mapping(js_gamepad):
                               if not isinstance(key, actually_an_axis)],
         evdev.ecodes.EV_ABS: [axis for axis in mapping[evdev.ecodes.EV_ABS]],
         # FIXME: Add support for EV_FF
-#        evdev.ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
+        evdev.ecodes.EV_FF: [evdev.ecodes.FF_RUMBLE],
     }
 
     for btn in mapping[evdev.ecodes.EV_KEY].copy():
@@ -376,6 +385,7 @@ def add_device(user_identifier, gamepad_info):
     # So instead I need to make sure the mapping info stays with the device.
     js_dev.mapping = gamepad_mapping
     js_dev.ff_effects = {}  # Used in FF_handler
+    js_dev.active_ff_effect = None  # Used in FF_handler
     active_devices[user_identifier] = js_dev
     ff_thread.start()
     # dev = active_devices[user_identifier]; breakpoint()
