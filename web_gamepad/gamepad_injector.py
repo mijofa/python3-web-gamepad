@@ -241,6 +241,27 @@ assumed_button_caps = {
     #     evdev.ecodes.BTN_DPAD_LEFT,
     #     evdev.ecodes.BTN_DPAD_RIGHT,
     # ],
+    # PS4 layout
+    18: [
+        evdev.ecodes.BTN_SOUTH,  # Same ecode as BTN_A
+        evdev.ecodes.BTN_EAST,   # Same ecode as BTN_B
+        evdev.ecodes.BTN_NORTH,  # Same ecode as BTN_X
+        evdev.ecodes.BTN_WEST,   # Same ecode as BTN_Y
+        evdev.ecodes.BTN_TL,
+        evdev.ecodes.BTN_TR,
+        evdev.ecodes.BTN_TL2,
+        evdev.ecodes.BTN_TR2,
+        evdev.ecodes.BTN_SELECT,
+        evdev.ecodes.BTN_START,
+        evdev.ecodes.BTN_THUMBL,
+        evdev.ecodes.BTN_THUMBR,
+        evdev.ecodes.BTN_DPAD_UP,
+        evdev.ecodes.BTN_DPAD_DOWN,
+        evdev.ecodes.BTN_DPAD_LEFT,
+        evdev.ecodes.BTN_DPAD_RIGHT,
+        evdev.ecodes.BTN_MODE,
+        evdev.ecodes.BTN_MODE,  # Is actually the touchpad being clicked.
+    ],
 }
 assumed_axes_caps = {
     8: [
