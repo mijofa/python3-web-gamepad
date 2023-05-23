@@ -1,3 +1,12 @@
+=========
+ABANDONED
+=========
+This was started during lockdowns, intended for weekly-ish online game nights.
+Lockdowns are well and truly over now, and the whole plan of this was much harder than initially expected.
+
+=========
+
+
 A lightweight webserver that will allow anyone to open the webpage and use it to proxy their game controller inputs to the web server.
 
 This should make local multiplayer games work online when used in conjunction with something like Jitsi or Discord for screensharing,
